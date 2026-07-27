@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="TicketDesk"/>
+<meta name="theme-color" content="#0a0c10"/>
+<title>TicketDesk</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0c10;
+  --surface: #13161c;
+  --surface2: #1a1f28;
+  --surface3: #222834;
+  --border: #2c3445;
+  --accent: #00e5a0;
+  --accent-dim: rgba(0,229,160,0.12);
+  --accent-glow: rgba(0,229,160,0.25);
+  --red: #ff5c5c;
+  --red-dim: rgba(255,92,92,0.12);
+  --amber: #ffb84d;
+  --amber-dim: rgba(255,184,77,0.12);
+  --blue: #5b9cf6;
+  --blue-dim: rgba(91,156,246,0.12);
+  --text: #e2e8f5;
+  --text2: #8896ab;
+  --text3: #4a5568;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  width: 100%;
+  top: 0; left: 0;
+}
+
+/* ── GRID BACKGROUND ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,160,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,160,0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── HEADER ── */
+.header {
+  position: relative;
+  z-index: 10;
+  padding: calc(var(--safe-top) + 14px) 20px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,12,16,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  flex-shrink: 0;
+}
+
+.header-left h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.header-left h1 span { color: var(--accent); }
+
+.header-left .date-line {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text2);
+  margin-top: 3px;
+  letter-spacing: 0.5px;
+}
+
+.header-right { display: flex; gap: 8px; align-items: center; }
+
+.icon-btn {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.icon-btn:active { transform: scale(0.93); background: var(--surface3); }
+
+/* ── SCROLLABLE BODY ── */
+.body-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  z-index: 1;
+  padding-bottom: calc(var(--safe-bottom) + 100px);
+}
+
+/* ── STATS ROW ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-item {
+  padding: 14px 10px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-item:last-child { border-right: none; }
+
+.stat-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.stat-item.s-total::after { background: var(--blue); }
+.stat-item.s-solved::after { background: var(--accent); }
+.stat-item.s-pending::after { background: var(--amber); }
+.stat-item.s-esc::after { background: var(--red); }
+
+.stat-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.s-total .stat-num { color: var(--blue); }
+.s-solved .stat-num { color: var(--accent); }
+.s-pending .stat-num { color: var(--amber); }
+.s-esc .stat-num { color: var(--red); }
+
+.stat-lbl {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── SECTION HEADER ── */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+}
+
+.section-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ── FILTER CHIPS ── */
+.chips {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 100px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.chip:active { transform: scale(0.95); }
+.chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.chip.c-solved.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.chip.c-pending.active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+.chip.c-esc.active { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+/* ── TICKET CARDS ── */
+.ticket-list { padding: 0 12px; display: flex; flex-direction: column; gap: 8px; }
+
+.ticket-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.ticket-card:active { transform: scale(0.985); }
+
+.ticket-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+}
+
+.ticket-card.st-solved::before { background: var(--accent); }
+.ticket-card.st-pending::before { background: var(--amber); }
+.ticket-card.st-escalated::before { background: var(--red); }
+
+.ticket-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.ticket-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.ticket-num-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+}
+
+.ticket-desc {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+.ticket-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.st-solved { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-glow); }
+.status-badge.st-pending { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,184,77,0.25); }
+.status-badge.st-escalated { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,92,92,0.25); }
+
+.status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+.ticket-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+}
+
+.update-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.mini-btn {
+  flex: 1;
+  padding: 7px 4px;
+  border-radius: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.mini-btn:active { transform: scale(0.95); }
+.mini-btn.solved { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.mini-btn.pending { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+.mini-btn.escalated { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--text2); }
+.empty-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); line-height: 1.6; }
+
+/* ── LOADING ── */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 24px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.spin {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── VOICE BUTTON (FAB) ── */
+.fab-wrap {
+  position: fixed;
+  bottom: calc(var(--safe-bottom) + 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.fab {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  cursor: pointer;
+  box-shadow: 0 0 0 0 var(--accent-glow), 0 8px 32px rgba(0,229,160,0.3);
+  transition: all 0.2s;
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
+}
+
+.fab:active { transform: scale(0.93); }
+.fab.listening { animation: fab-pulse 1.2s ease-in-out infinite; }
+.fab-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+
+@keyframes fab-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow), 0 8px 32px rgba(0,229,160,0.3); }
+  50% { box-shadow: 0 0 0 18px rgba(0,229,160,0), 0 8px 32px rgba(0,229,160,0.3); }
+}
+
+/* ── VOICE OVERLAY ── */
+.voice-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(10,12,16,0.97);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+
+.voice-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.voice-ring {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.voice-ring.active {
+  animation: ring-pulse 1.2s ease-in-out infinite;
+}
+
+.voice-ring::before, .voice-ring::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-glow);
+  opacity: 0;
+}
+
+.voice-ring.active::before { animation: ripple 1.2s ease-out infinite; }
+.voice-ring.active::after { animation: ripple 1.2s ease-out 0.4s infinite; }
+
+@keyframes ripple {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+@keyframes ring-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+  50% { box-shadow: 0 0 0 12px rgba(0,229,160,0); }
+}
+
+.voice-status {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.voice-hint {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text2);
+  text-align: center;
+  line-height: 1.7;
+  margin-bottom: 24px;
+  max-width: 300px;
+}
+
+.voice-hint em {
+  color: var(--accent);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.voice-transcript-box {
+  width: 100%;
+  max-width: 380px;
+  min-height: 80px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 20px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.voice-transcript-box.has-text {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.voice-placeholder {
+  color: var(--text3);
+  font-size: 13px;
+  font-family: 'DM Mono', monospace;
+}
+
+.voice-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.v-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.v-btn:active { transform: scale(0.96); }
+.v-btn-primary { background: var(--accent); color: #0a0c10; }
+.v-btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+
+.voice-commands-hint {
+  margin-top: 24px;
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.voice-commands-hint h4 {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.cmd-example {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.cmd-example:last-child { margin-bottom: 0; }
+
+.cmd-tag {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.cmd-tag.log { background: var(--blue-dim); color: var(--blue); }
+.cmd-tag.upd { background: var(--accent-dim); color: var(--accent); }
+
+.cmd-text { color: var(--text2); font-family: 'DM Mono', monospace; font-size: 11px; }
+.cmd-text em { color: var(--text); font-style: italic; }
+
+/* ── SHEET CONFIG PANEL ── */
+.config-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(10,12,16,0.97);
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 20px);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  overflow-y: auto;
+}
+
+.config-panel.open { transform: translateY(0); }
+
+.config-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.config-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.config-field { margin-bottom: 16px; }
+
+.config-field label {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.config-field input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.2s;
+}
+
+.config-field input:focus { border-color: var(--accent); }
+
+.config-save-btn {
+  width: 100%;
+  padding: 15px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #0a0c10;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  margin-top: 8px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.config-save-btn:active { opacity: 0.85; transform: scale(0.98); }
+
+.step-list { margin-bottom: 24px; }
+
+.step {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+
+.step-num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.step-text {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.5;
+  padding-top: 3px;
+}
+
+.step-text strong { color: var(--text); }
+
+.code-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  line-height: 1.5;
+  margin: 8px 0;
+  overflow-x: auto;
+  white-space: pre;
+  -webkit-overflow-scrolling: touch;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 20px 0;
+}
+
+/* ── LOG PANEL (SLIDE UP) ── */
+.log-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 150;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: 24px 24px 0 0;
+  padding: 20px 20px calc(var(--safe-bottom) + 20px);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: 0 -20px 60px rgba(0,0,0,0.5);
+}
+
+.log-panel.open { transform: translateY(0); }
+
+.panel-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0 auto 18px;
+}
+
+.log-panel-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.log-field { margin-bottom: 12px; }
+
+.log-field label {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.log-field input, .log-field select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.2s;
+}
+
+.log-field input:focus, .log-field select:focus { border-color: var(--accent); }
+.log-field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5568' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+.log-field select option { background: var(--surface2); }
+
+.log-submit {
+  width: 100%;
+  padding: 15px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #0a0c10;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  margin-top: 4px;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: all 0.15s;
+}
+
+.log-submit:active { transform: scale(0.98); opacity: 0.9; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  top: calc(var(--safe-top) + 70px);
+  left: 16px;
+  right: 16px;
+  z-index: 999;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.err { border-color: var(--red); color: var(--red); }
+.toast.warn { border-color: var(--amber); color: var(--amber); }
+.toast-icon { font-size: 16px; }
+
+/* ── OVERLAY BACKDROP ── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 140;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+
+.backdrop.show { opacity: 1; pointer-events: all; }
+
+/* No select on interactive elements */
+button, .chip, .mini-btn { -webkit-user-select: none; user-select: none; }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <div class="header-left">
+    <h1>Ticket<span>Desk</span></h1>
+    <div class="date-line" id="headerDate">—</div>
+  </div>
+  <div class="header-right">
+    <div class="icon-btn" onclick="openLog()" title="New ticket">➕</div>
+    <div class="icon-btn" onclick="openConfig()" title="Settings">⚙️</div>
+    <div class="icon-btn" onclick="loadTickets()" title="Refresh">🔄</div>
+  </div>
+</div>
+
+<!-- ── SCROLLABLE BODY ── -->
+<div class="body-scroll" id="bodyScroll">
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-item s-total">
+      <div class="stat-num" id="st0">—</div>
+      <div class="stat-lbl">Today</div>
+    </div>
+    <div class="stat-item s-solved">
+      <div class="stat-num" id="st1">—</div>
+      <div class="stat-lbl">Solved</div>
+    </div>
+    <div class="stat-item s-pending">
+      <div class="stat-num" id="st2">—</div>
+      <div class="stat-lbl">Pending</div>
+    </div>
+    <div class="stat-item s-esc">
+      <div class="stat-num" id="st3">—</div>
+      <div class="stat-lbl">Escalated</div>
+    </div>
+  </div>
+
+  <!-- Section header -->
+  <div class="section-head">
+    <span class="section-title">Tickets</span>
+    <span class="section-title" id="ticketCount">—</span>
+  </div>
+
+  <!-- Filter chips -->
+  <div class="chips">
+    <div class="chip active" onclick="setFilter('All',this)">All</div>
+    <div class="chip c-solved" onclick="setFilter('Solved',this)">✅ Solved</div>
+    <div class="chip c-pending" onclick="setFilter('Pending',this)">⏳ Pending</div>
+    <div class="chip c-esc" onclick="setFilter('Escalated',this)">🔴 Escalated</div>
+  </div>
+
+  <!-- Ticket list -->
+  <div class="ticket-list" id="ticketList">
+    <div class="empty-state">
+      <div class="empty-icon">🎙️</div>
+      <div class="empty-title">Tap the mic to start</div>
+      <div class="empty-sub">Say "Log Sarah, password reset"<br>or tap ⚙️ to connect your Google Sheet</div>
+    </div>
+  </div>
+
+</div><!-- end body-scroll -->
+
+<!-- ── FAB ── -->
+<div class="fab-wrap">
+  <div class="fab" id="fab" onclick="startVoice()">🎙️</div>
+  <span class="fab-label">Hold to speak</span>
+</div>
+
+<!-- ── BACKDROP ── -->
+<div class="backdrop" id="backdrop" onclick="closeAll()"></div>
+
+<!-- ── VOICE OVERLAY ── -->
+<div class="voice-overlay" id="voiceOverlay">
+  <div class="voice-ring" id="voiceRing">🎙️</div>
+  <div class="voice-status" id="voiceStatus">Tap to speak</div>
+  <div class="voice-hint" id="voiceHint">
+    Say a command like:<br>
+    <em>"Log Sarah, password reset"</em><br>
+    <em>"Update Sarah to Solved"</em>
+  </div>
+  <div class="voice-transcript-box" id="voiceBox">
+    <span class="voice-placeholder" id="voicePlaceholder">Waiting…</span>
+  </div>
+  <div class="voice-actions">
+    <button class="v-btn v-btn-primary" id="voiceConfirm" onclick="confirmVoice()" style="display:none">Use This</button>
+    <button class="v-btn v-btn-ghost" onclick="retryVoice()" id="voiceRetry" style="display:none">Try Again</button>
+    <button class="v-btn v-btn-ghost" onclick="closeVoice()">Cancel</button>
+  </div>
+  <div class="voice-commands-hint">
+    <h4>Voice Commands</h4>
+    <div class="cmd-example">
+      <span class="cmd-tag log">Log</span>
+      <span class="cmd-text"><em>"Log Sarah comma password reset"</em></span>
+    </div>
+    <div class="cmd-example">
+      <span class="cmd-tag log">Log</span>
+      <span class="cmd-text"><em>"Log John, Zoho login error, Escalated"</em></span>
+    </div>
+    <div class="cmd-example">
+      <span class="cmd-tag upd">Update</span>
+      <span class="cmd-text"><em>"Update Sarah to Solved"</em></span>
+    </div>
+    <div class="cmd-example">
+      <span class="cmd-tag upd">Update</span>
+      <span class="cmd-text"><em>"Mark John as Escalated"</em></span>
+    </div>
+  </div>
+</div>
+
+<!-- ── LOG PANEL ── -->
+<div class="log-panel" id="logPanel">
+  <div class="panel-handle"></div>
+  <div class="log-panel-title">New Ticket</div>
+  <div class="log-field">
+    <label>Name</label>
+    <input type="text" id="logName" placeholder="e.g. Sarah" autocomplete="off" autocorrect="off"/>
+  </div>
+  <div class="log-field">
+    <label>Description</label>
+    <input type="text" id="logDesc" placeholder="e.g. Password reset not working" autocomplete="off"/>
+  </div>
+  <div class="log-field">
+    <label>Status</label>
+    <select id="logStatus">
+      <option value="Pending">Pending</option>
+      <option value="Solved">Solved</option>
+      <option value="Escalated">Escalated</option>
+    </select>
+  </div>
+  <button class="log-submit" onclick="submitLog()">Log Ticket</button>
+</div>
+
+<!-- ── CONFIG PANEL ── -->
+<div class="config-panel" id="configPanel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div class="config-title">Setup</div>
+    <div class="icon-btn" onclick="closeConfig()">✕</div>
+  </div>
+
+  <div class="config-sub">Connect your Google Sheet so tickets are saved permanently and visible across all your devices.</div>
+
+  <div class="step-list">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">Create a Google Sheet with headers: <strong>Date, Count, Name, Description, Status</strong></div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">Go to <strong>Extensions → Apps Script</strong> and paste the script from the install guide</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">Click <strong>Deploy → New Deployment → Web App</strong>. Set access to <strong>"Anyone"</strong>. Copy the URL.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">Paste the URL below and tap Save</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="config-field">
+    <label>Apps Script Web App URL</label>
+    <input type="url" id="configUrl" placeholder="https://script.google.com/macros/s/..." autocomplete="off" autocorrect="off" autocapitalize="off"/>
+  </div>
+
+  <button class="config-save-btn" onclick="saveConfig()">Save & Connect</button>
+
+  <div class="divider"></div>
+
+  <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Quick Test</div>
+  <button class="v-btn v-btn-ghost" style="width:100%;padding:13px;border-radius:var(--radius);font-size:14px;" onclick="loadDemoData()">Load Demo Data (no sheet needed)</button>
+
+  <div style="height:20px;"></div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✅</span>
+  <span id="toastMsg">Done</span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let tickets = [];
+let currentFilter = 'All';
+let recognition = null;
+let isListening = false;
+let scriptUrl = '';
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  updateDateLine();
+  scriptUrl = localStorage.getItem('tdUrl') || '';
+  if (scriptUrl) {
+    document.getElementById('configUrl').value = scriptUrl;
+    loadTickets();
+  } else {
+    loadDemoData();
+  }
+  setupVoiceSupport();
+});
+
+function updateDateLine() {
+  const now = new Date();
+  document.getElementById('headerDate').textContent =
+    now.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
+}
+
+// ═══════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════
+function todayStr() {
+  return new Date().toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+}
+
+function todayCount() {
+  const t = todayStr();
+  return tickets.filter(x => (x.date || '').toUpperCase() === t).length;
+}
+
+async function loadTickets() {
+  if (!scriptUrl) return;
+  showLoading();
+  try {
+    const res = await fetch(`${scriptUrl}?action=list`, { cache: 'no-store' });
+    const data = await res.json();
+    tickets = (data.tickets || []).reverse();
+    renderAll();
+    toast('Refreshed ✅');
+  } catch (e) {
+    toast('Could not reach sheet — check URL', 'err');
+    hideLoading();
+  }
+}
+
+function loadDemoData() {
+  const t = todayStr();
+  tickets = [
+    { date: t, count: 5, name: 'Sarah',  description: 'Password reset not working',          status: 'Solved' },
+    { date: t, count: 4, name: 'John',   description: 'Zoho login error — stuck on 2FA loop', status: 'Pending' },
+    { date: t, count: 3, name: 'Mike',   description: 'Email not syncing on iPhone',          status: 'Escalated' },
+    { date: t, count: 2, name: 'Lisa',   description: 'SharePoint permissions error',         status: 'Solved' },
+    { date: t, count: 1, name: 'Tom',    description: 'Printer driver install',               status: 'Solved' },
+  ];
+  renderAll();
+  toast('Demo mode — tap ⚙️ to connect your sheet', 'warn');
+}
+
+// ═══════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════
+function renderAll() {
+  updateStats();
+  renderList();
+}
+
+function updateStats() {
+  const t = todayStr();
+  const today = tickets.filter(x => (x.date || '').toUpperCase() === t);
+  const solved = today.filter(x => x.status === 'Solved').length;
+  const pending = today.filter(x => x.status === 'Pending').length;
+  const esc = today.filter(x => x.status === 'Escalated').length;
+  document.getElementById('st0').textContent = today.length;
+  document.getElementById('st1').textContent = solved;
+  document.getElementById('st2').textContent = pending;
+  document.getElementById('st3').textContent = esc;
+}
+
+function renderList() {
+  const list = document.getElementById('ticketList');
+  const filtered = currentFilter === 'All' ? tickets : tickets.filter(t => t.status === currentFilter);
+  document.getElementById('ticketCount').textContent = `${filtered.length} ticket${filtered.length !== 1 ? 's' : ''}`;
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">No ${currentFilter} tickets</div>
+      <div class="empty-sub">Log a ticket with the mic or ➕ button</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map((t, i) => {
+    const st = (t.status || 'Pending').toLowerCase();
+    return `<div class="ticket-card st-${st}">
+      <div class="ticket-top">
+        <div class="ticket-name">${esc(t.name)}</div>
+        <div class="ticket-num-badge">#${t.count || (filtered.length - i)}</div>
+      </div>
+      <div class="ticket-desc">${esc(t.description)}</div>
+      <div class="ticket-bottom">
+        <div class="status-badge st-${st}">
+          <div class="status-dot"></div>
+          ${t.status || 'Pending'}
+        </div>
+        <div class="ticket-date">${t.date || '—'}</div>
+      </div>
+      <div class="update-row">
+        <div class="mini-btn solved" onclick="quickUpdate('${esc(t.name)}', 'Solved')">✅ Solved</div>
+        <div class="mini-btn pending" onclick="quickUpdate('${esc(t.name)}', 'Pending')">⏳ Pending</div>
+        <div class="mini-btn escalated" onclick="quickUpdate('${esc(t.name)}', 'Escalated')">🔴 Escalated</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showLoading() {
+  document.getElementById('ticketList').innerHTML = `<div class="loading-state"><div class="spin"></div> Loading tickets…</div>`;
+}
+
+function hideLoading() {}
+
+// ═══════════════════════════════════════════
+//  LOG TICKET
+// ═══════════════════════════════════════════
+function openLog(prefill) {
+  if (prefill) {
+    document.getElementById('logName').value = prefill.name || '';
+    document.getElementById('logDesc').value = prefill.desc || '';
+    document.getElementById('logStatus').value = prefill.status || 'Pending';
+  }
+  document.getElementById('logPanel').classList.add('open');
+  document.getElementById('backdrop').classList.add('show');
+  setTimeout(() => document.getElementById('logName').focus(), 350);
+}
+
+function closeLog() {
+  document.getElementById('logPanel').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('show');
+}
+
+async function submitLog() {
+  const name = document.getElementById('logName').value.trim();
+  const desc = document.getElementById('logDesc').value.trim();
+  const status = document.getElementById('logStatus').value;
+
+  if (!name) { toast('Enter a name', 'err'); document.getElementById('logName').focus(); return; }
+  if (!desc) { toast('Enter a description', 'err'); document.getElementById('logDesc').focus(); return; }
+
+  const t = todayStr();
+  const count = todayCount() + 1;
+  const newTicket = { date: t, count, name, description: desc, status };
+
+  // Optimistic update
+  tickets.unshift(newTicket);
+  renderAll();
+  closeLog();
+  document.getElementById('logName').value = '';
+  document.getElementById('logDesc').value = '';
+  document.getElementById('logStatus').value = 'Pending';
+  toast(`Ticket #${count} logged — ${name}`);
+
+  if (!scriptUrl) return;
+
+  try {
+    await fetch(`${scriptUrl}?action=log&name=${enc(name)}&description=${enc(desc)}&status=${enc(status)}`);
+  } catch (e) {
+    toast('Saved locally — sheet sync failed', 'warn');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  UPDATE TICKET
+// ═══════════════════════════════════════════
+async function quickUpdate(name, status) {
+  // Update locally
+  for (let i = tickets.length - 1; i >= 0; i--) {
+    if (tickets[i].name.toLowerCase() === name.toLowerCase()) {
+      tickets[i].status = status;
+      break;
+    }
+  }
+  renderAll();
+  toast(`${name} → ${status}`);
+
+  if (!scriptUrl) return;
+  try {
+    await fetch(`${scriptUrl}?action=update&name=${enc(name)}&status=${enc(status)}`);
+  } catch (e) {
+    toast('Local update done — sheet sync failed', 'warn');
+  }
+}
+
+function enc(s) { return encodeURIComponent(s); }
+
+// ═══════════════════════════════════════════
+//  FILTER
+// ═══════════════════════════════════════════
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+// ═══════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════
+function openConfig() {
+  document.getElementById('configPanel').classList.add('open');
+}
+
+function closeConfig() {
+  document.getElementById('configPanel').classList.remove('open');
+}
+
+function saveConfig() {
+  const url = document.getElementById('configUrl').value.trim();
+  if (!url || !url.startsWith('https://')) {
+    toast('Paste a valid https:// URL', 'err');
+    return;
+  }
+  scriptUrl = url;
+  localStorage.setItem('tdUrl', url);
+  toast('Connected ✅ — loading tickets…');
+  closeConfig();
+  loadTickets();
+}
+
+// ═══════════════════════════════════════════
+//  VOICE
+// ═══════════════════════════════════════════
+function setupVoiceSupport() {
+  const supported = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+  if (!supported) {
+    document.querySelector('.fab-label').textContent = 'Chrome only';
+    document.getElementById('fab').style.opacity = '0.4';
+  }
+}
+
+function startVoice() {
+  const supported = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+  if (!supported) {
+    toast('Voice needs Chrome browser — open in Chrome', 'err');
+    return;
+  }
+  openVoiceOverlay();
+  beginListening();
+}
+
+function openVoiceOverlay() {
+  document.getElementById('voiceOverlay').classList.add('open');
+  document.getElementById('voiceBox').innerHTML = '<span class="voice-placeholder" id="voicePlaceholder">Listening…</span>';
+  document.getElementById('voiceStatus').textContent = 'Listening…';
+  document.getElementById('voiceRing').classList.add('active');
+  document.getElementById('voiceConfirm').style.display = 'none';
+  document.getElementById('voiceRetry').style.display = 'none';
+  document.getElementById('fab').classList.add('listening');
+}
+
+function closeVoice() {
+  if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
+  isListening = false;
+  document.getElementById('voiceOverlay').classList.remove('open');
+  document.getElementById('fab').classList.remove('listening');
+  document.getElementById('voiceRing').classList.remove('active');
+}
+
+function retryVoice() {
+  document.getElementById('voiceBox').innerHTML = '<span class="voice-placeholder">Listening…</span>';
+  document.getElementById('voiceStatus').textContent = 'Listening…';
+  document.getElementById('voiceRing').classList.add('active');
+  document.getElementById('voiceConfirm').style.display = 'none';
+  document.getElementById('voiceRetry').style.display = 'none';
+  beginListening();
+}
+
+function beginListening() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'en-AU';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 3;
+  isListening = true;
+
+  recognition.onresult = (e) => {
+    const results = Array.from(e.results);
+    const transcript = results.map(r => r[0].transcript).join(' ').trim();
+    const isFinal = results.some(r => r.isFinal);
+
+    const box = document.getElementById('voiceBox');
+    box.innerHTML = transcript;
+    box.classList.add('has-text');
+    box.dataset.transcript = transcript;
+
+    if (isFinal) {
+      document.getElementById('voiceStatus').textContent = 'Got it — confirm?';
+      document.getElementById('voiceRing').classList.remove('active');
+      document.getElementById('voiceConfirm').style.display = 'flex';
+      document.getElementById('voiceRetry').style.display = 'flex';
+      isListening = false;
+    }
+  };
+
+  recognition.onerror = (e) => {
+    isListening = false;
+    document.getElementById('voiceRing').classList.remove('active');
+    if (e.error === 'no-speech') {
+      document.getElementById('voiceStatus').textContent = 'Nothing heard';
+      document.getElementById('voiceRetry').style.display = 'flex';
+    } else if (e.error === 'not-allowed') {
+      closeVoice();
+      toast('Microphone permission denied — check browser settings', 'err');
+    } else {
+      document.getElementById('voiceStatus').textContent = 'Error — try again';
+      document.getElementById('voiceRetry').style.display = 'flex';
+    }
+  };
+
+  recognition.onend = () => {
+    if (isListening) {
+      // Auto-stopped without result
+      document.getElementById('voiceRing').classList.remove('active');
+      const box = document.getElementById('voiceBox');
+      if (!box.classList.contains('has-text')) {
+        document.getElementById('voiceStatus').textContent = 'Nothing heard — try again';
+        document.getElementById('voiceRetry').style.display = 'flex';
+      }
+    }
+  };
+
+  recognition.start();
+}
+
+function confirmVoice() {
+  const transcript = document.getElementById('voiceBox').dataset.transcript || '';
+  if (!transcript) { toast('Nothing to process', 'err'); return; }
+  closeVoice();
+  parseVoiceCommand(transcript);
+}
+
+// ═══════════════════════════════════════════
+//  VOICE COMMAND PARSER
+// ═══════════════════════════════════════════
+function parseVoiceCommand(raw) {
+  const text = raw.trim();
+  const lower = text.toLowerCase();
+
+  // ── UPDATE / MARK patterns ──
+  // "update [name] to/as [status]"
+  // "mark [name] as/to [status]"
+  // "[name]'s ticket is [status]"
+  const updatePatterns = [
+    /(?:update|mark|set|change)\s+(\w+)(?:'s\s+(?:ticket|issue|problem))?\s+(?:to|as)\s+(solved|pending|escalated)/i,
+    /(\w+)(?:'s\s+(?:ticket|issue|problem))?\s+(?:is|as)\s+(solved|pending|escalated)/i,
+    /(?:resolve|close|fix)\s+(\w+)/i,
+  ];
+
+  for (const pattern of updatePatterns) {
+    const m = text.match(pattern);
+    if (m) {
+      let name = capitalize(m[1]);
+      let status = m[2] ? capitalize(m[2]) : 'Solved';
+
+      // Validate name against existing tickets
+      const match = tickets.find(t => t.name.toLowerCase() === name.toLowerCase());
+      if (!match) {
+        toast(`No ticket found for "${name}" — logging new instead`, 'warn');
+        openLog({ name, desc: 'Voice update — check details', status });
+        return;
+      }
+
+      quickUpdate(name, status);
+      speakFeedback(`${name} marked as ${status}`);
+      return;
+    }
+  }
+
+  // ── LOG patterns ──
+  // "log [name] comma [description]"
+  // "log [name] dash [description]"
+  // "log [name] [description] [optional status]"
+  // "new ticket [name] [description]"
+  const logTriggers = /^(?:log|new ticket|add ticket|create ticket|ticket for|add|record)\s+/i;
+  if (logTriggers.test(lower)) {
+    const stripped = text.replace(logTriggers, '').trim();
+    const { name, desc, status } = parseLogArgs(stripped);
+    if (!name) { toast('Could not extract name — try: "Log Sarah, password reset"', 'err'); return; }
+    openLog({ name, desc, status });
+    speakFeedback(`Logging ticket for ${name}`);
+    return;
+  }
+
+  // ── FALLBACK: try to parse as log anyway if it contains a comma ──
+  if (text.includes(',')) {
+    const { name, desc, status } = parseLogArgs(text);
+    if (name) {
+      openLog({ name, desc, status });
+      speakFeedback(`Logging ticket for ${name}`);
+      return;
+    }
+  }
+
+  // ── Nothing matched ──
+  toast(`Didn't understand: "${text}" — try "Log Sarah, password reset"`, 'err');
+}
+
+function parseLogArgs(text) {
+  const statusWords = ['solved', 'pending', 'escalated'];
+  let status = 'Pending';
+
+  // Check for status at the end
+  const statusMatch = text.match(/,?\s*(solved|pending|escalated)\s*$/i);
+  if (statusMatch) {
+    status = capitalize(statusMatch[1]);
+    text = text.replace(statusMatch[0], '').trim();
+  }
+
+  // Split on comma or dash
+  const parts = text.split(/,\s*|-\s*/).map(s => s.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    return { name: capitalize(parts[0]), desc: parts.slice(1).join(', '), status };
+  }
+
+  // Just a single word — treat as name only
+  if (parts.length === 1) {
+    return { name: capitalize(parts[0]), desc: '', status };
+  }
+
+  return { name: '', desc: '', status };
+}
+
+function capitalize(s) {
+  return String(s).charAt(0).toUpperCase() + String(s).slice(1).toLowerCase();
+}
+
+// Text-to-speech feedback
+function speakFeedback(text) {
+  if (!('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.volume = 0.7;
+  u.rate = 1.1;
+  window.speechSynthesis.speak(u);
+}
+
+// ═══════════════════════════════════════════
+//  CLOSE ALL PANELS
+// ═══════════════════════════════════════════
+function closeAll() {
+  closeLog();
+  document.getElementById('backdrop').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════
+let toastTimer;
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  const icon = document.getElementById('toastIcon');
+  const msgEl = document.getElementById('toastMsg');
+
+  const icons = { ok: '✅', err: '❌', warn: '⚠️' };
+  el.className = 'toast' + (type !== 'ok' ? ` ${type}` : '');
+  icon.textContent = icons[type] || '✅';
+  msgEl.textContent = msg;
+  el.classList.add('show');
+
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
